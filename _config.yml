@@ -1,0 +1,13 @@
+title: "ChessMates"
+description: "SPA для кругового шахматного турнира с публикацией через GitHub Pages на базе Jekyll"
+lang: ru
+permalink: pretty
+# GitHub Pages уже включает Jekyll, поэтому достаточно настроить базовые параметры.
+markdown: kramdown
+kramdown:
+  input: GFM
+plugins: []
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
