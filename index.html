@@ -1,24 +1,26 @@
 ---
 layout: null
-title: "ChessMates — круговой турнир"
-description: "SPA на Jekyll для проведения кругового шахматного турнира и публикации на GitHub Pages"
+title: "Турнир Ферганы — круговой турнир"
+description: "Минималистичный SPA для кругового шахматного турнира"
 ---
 <!DOCTYPE html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChessMates — круговой турнир</title>
+    <title>Турнир Ферганы — круговой турнир</title>
     <style>
       :root {
-        color-scheme: light dark;
-        --bg: #f6f8fa;
-        --card-bg: #fff;
-        --text: #1f2328;
-        --accent: #3563e9;
-        --accent-dark: #264dbe;
-        --border: #d0d7de;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color-scheme: light;
+        --bg: radial-gradient(circle at 10% 10%, #f9fbff, #f2f4ff 35%, #edf6ff 70%, #eafaf1);
+        --card-bg: rgba(255, 255, 255, 0.86);
+        --text: #111827;
+        --muted: rgba(17, 24, 39, 0.6);
+        --accent: #4f46e5;
+        --accent-dark: #4338ca;
+        --border: rgba(255, 255, 255, 0.6);
+        --shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+        font-family: "Inter", "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
       * {
@@ -29,22 +31,30 @@ description: "SPA на Jekyll для проведения кругового ш�
         margin: 0;
         background: var(--bg);
         color: var(--text);
+        min-height: 100vh;
       }
 
       header {
-        padding: 2rem 1.5rem 0;
+        padding: 3rem 1.5rem 1rem;
         text-align: center;
       }
 
       h1 {
-        margin-bottom: 0.2rem;
-        font-size: clamp(1.6rem, 2.5vw, 2.6rem);
+        margin: 0;
+        font-size: clamp(2.4rem, 4vw, 3.2rem);
+        letter-spacing: -0.02em;
+      }
+
+      header p {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        color: var(--muted);
       }
 
       main {
         max-width: 1100px;
-        margin: 0 auto;
-        padding: 1.5rem;
+        margin: 0 auto 3rem;
+        padding: 0 1.5rem 2rem;
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
@@ -53,9 +63,10 @@ description: "SPA на Jekyll для проведения кругового ш�
       .card {
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+        border-radius: 24px;
+        padding: 1.75rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
       }
 
       .hidden {
@@ -66,25 +77,41 @@ description: "SPA на Jekyll для проведения кругового ш�
         width: 100%;
         min-height: 120px;
         resize: vertical;
-        padding: 0.75rem 1rem;
-        border-radius: 12px;
-        border: 1px solid var(--border);
+        padding: 1rem 1.25rem;
+        border-radius: 18px;
+        border: 1px solid rgba(79, 70, 229, 0.25);
         font-size: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
       }
 
       button {
         border: none;
-        background: var(--accent);
+        background: linear-gradient(120deg, var(--accent), #22d3ee);
         color: white;
-        padding: 0.9rem 1.4rem;
+        padding: 0.95rem 1.6rem;
         border-radius: 999px;
         font-size: 1rem;
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 15px 30px rgba(79, 70, 229, 0.25);
+      }
+
+      button.secondary {
+        background: rgba(15, 23, 42, 0.08);
+        color: var(--text);
+        box-shadow: none;
       }
 
       button:hover {
-        background: var(--accent-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 20px 40px rgba(79, 70, 229, 0.3);
       }
 
       .share-link {
@@ -96,10 +123,11 @@ description: "SPA на Jekyll для проведения кругового ш�
 
       .share-link input {
         width: 100%;
-        padding: 0.75rem 1rem;
+        padding: 0.85rem 1.1rem;
         border-radius: 999px;
-        border: 1px solid var(--border);
+        border: 1px solid rgba(79, 70, 229, 0.2);
         font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.85);
       }
 
       .grid {
@@ -110,37 +138,47 @@ description: "SPA на Jekyll для проведения кругового ш�
 
       table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
       }
 
       th,
       td {
-        border: 1px solid var(--border);
-        padding: 0.6rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        padding: 0.75rem;
         text-align: center;
         font-size: 0.95rem;
       }
 
-      th {
-        background: rgba(53, 99, 233, 0.08);
+      thead th {
+        background: linear-gradient(120deg, rgba(79, 70, 229, 0.12), rgba(34, 211, 238, 0.12));
         font-weight: 600;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
       }
 
       td select {
         width: 100%;
-        padding: 0.4rem;
-        border-radius: 8px;
-        border: 1px solid var(--border);
+        padding: 0.5rem;
+        border-radius: 14px;
+        border: 1px solid rgba(79, 70, 229, 0.2);
         font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.95);
       }
 
       .leaderboard tbody tr:first-child {
-        background: rgba(53, 99, 233, 0.08);
+        background: linear-gradient(120deg, rgba(79, 70, 229, 0.18), rgba(34, 211, 238, 0.18));
       }
 
       .muted {
-        color: #6e7781;
-        font-size: 0.9rem;
+        color: var(--muted);
+        font-size: 0.95rem;
       }
 
       @media (max-width: 640px) {
@@ -162,23 +200,21 @@ description: "SPA на Jekyll для проведения кругового ш�
   </head>
   <body>
     <header>
-      <p class="muted">SPA для кругового шахматного турнира</p>
-      <h1>ChessMates</h1>
-      <p class="muted">Вводите участников, заполняйте результаты, делитесь ссылкой</p>
+      <h1>Турнир Ферганы</h1>
+      <p>Современная круговая сетка в мягком светлом стиле</p>
     </header>
 
     <main>
       <section class="card">
         <h2>Участники</h2>
-        <p class="muted">Введите имена через перевод строки. Минимум два игрока.</p>
-        <textarea id="participantsInput" placeholder="Алиса\nБоб\nЧарли"></textarea>
+        <textarea id="participantsInput" placeholder=""></textarea>
         <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
           <button id="startBtn" type="button">Начать турнир</button>
-          <button id="resetBtn" type="button" style="background: #e04f5f;">Очистить</button>
+          <button id="resetBtn" type="button" class="secondary">Очистить</button>
         </div>
         <div class="share-link">
-          <div>
-            <label for="shareLink" class="muted">Ссылка для обмена</label>
+          <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+            <span class="muted">Ссылка на турнир</span>
             <input id="shareLink" readonly placeholder="Появится после старта" />
           </div>
           <button id="copyLinkBtn" type="button">Скопировать</button>
@@ -187,15 +223,11 @@ description: "SPA на Jekyll для проведения кругового ш�
 
       <div class="grid">
         <section id="resultsSection" class="card hidden">
-          <h2>Таблица встреч</h2>
+          <h2>Сетка встреч</h2>
           <div class="muted" id="roundInfo"></div>
           <div class="table-wrapper" style="overflow-x: auto; margin-top: 1rem;">
             <table id="resultsTable"></table>
           </div>
-          <p class="muted" style="margin-top: 0.75rem;">
-            Результаты указываются с точки зрения строки (первый игрок). Например, «1-0» — победа игрока
-            слева, «0-1» — победа игрока сверху.
-          </p>
         </section>
 
         <section id="leaderboardSection" class="card hidden">
