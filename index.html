@@ -408,9 +408,10 @@ description: "SPA на Jekyll для проведения кругового ш�
           results: state.results,
         };
         const encoded = encodeState(payload);
-        const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+        const safeParam = encodeURIComponent(encoded);
+        const url = `${window.location.origin}${window.location.pathname}?data=${safeParam}`;
         shareLinkInput.value = url;
-        history.replaceState(null, "", `?data=${encoded}`);
+        history.replaceState(null, "", `?data=${safeParam}`);
       }
 
       function hydrateFromURL() {
@@ -452,7 +453,9 @@ description: "SPA на Jekyll для проведения кругового ш�
       }
 
       function decodeState(encoded) {
-        const binary = atob(encoded);
+        if (!encoded) return {};
+        const normalized = encoded.replace(/ /g, "+");
+        const binary = atob(normalized);
         const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
         const json = new TextDecoder().decode(bytes);
         return JSON.parse(json);
