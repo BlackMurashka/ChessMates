@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChessMates — круговой турнир</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f8fa;
+        --card-bg: #fff;
+        --text: #1f2328;
+        --accent: #3563e9;
+        --accent-dark: #264dbe;
+        --border: #d0d7de;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        padding: 2rem 1.5rem 0;
+        text-align: center;
+      }
+
+      h1 {
+        margin-bottom: 0.2rem;
+        font-size: clamp(1.6rem, 2.5vw, 2.6rem);
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 1rem;
+      }
+
+      button {
+        border: none;
+        background: var(--accent);
+        color: white;
+        padding: 0.9rem 1.4rem;
+        border-radius: 999px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      button:hover {
+        background: var(--accent-dark);
+      }
+
+      .share-link {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
+      .share-link input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 0.95rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 0.6rem;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+
+      th {
+        background: rgba(53, 99, 233, 0.08);
+        font-weight: 600;
+      }
+
+      td select {
+        width: 100%;
+        padding: 0.4rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+
+      .leaderboard tbody tr:first-child {
+        background: rgba(53, 99, 233, 0.08);
+      }
+
+      .muted {
+        color: #6e7781;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 640px) {
+        th,
+        td {
+          font-size: 0.85rem;
+          padding: 0.4rem;
+        }
+
+        button {
+          width: 100%;
+        }
+
+        .share-link {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="muted">SPA для кругового шахматного турнира</p>
+      <h1>ChessMates</h1>
+      <p class="muted">Вводите участников, заполняйте результаты, делитесь ссылкой</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Участники</h2>
+        <p class="muted">Введите имена через перевод строки. Минимум два игрока.</p>
+        <textarea id="participantsInput" placeholder="Алиса\nБоб\nЧарли"></textarea>
+        <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button id="startBtn" type="button">Начать турнир</button>
+          <button id="resetBtn" type="button" style="background: #e04f5f;">Очистить</button>
+        </div>
+        <div class="share-link">
+          <div>
+            <label for="shareLink" class="muted">Ссылка для обмена</label>
+            <input id="shareLink" readonly placeholder="Появится после старта" />
+          </div>
+          <button id="copyLinkBtn" type="button">Скопировать</button>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section id="resultsSection" class="card hidden">
+          <h2>Таблица встреч</h2>
+          <div class="muted" id="roundInfo"></div>
+          <div class="table-wrapper" style="overflow-x: auto; margin-top: 1rem;">
+            <table id="resultsTable"></table>
+          </div>
+          <p class="muted" style="margin-top: 0.75rem;">
+            Результаты указываются с точки зрения строки (первый игрок). Например, «1-0» — победа игрока
+            слева, «0-1» — победа игрока сверху.
+          </p>
+        </section>
+
+        <section id="leaderboardSection" class="card hidden">
+          <h2>Таблица лидеров</h2>
+          <table class="leaderboard">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Игрок</th>
+                <th>Очки</th>
+                <th>Игр</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </main>
+
+    <template id="optionTemplate">
+      <option value="">—</option>
+      <option value="1-0">1 - 0</option>
+      <option value="0-1">0 - 1</option>
+      <option value="0.5-0.5">½ - ½</option>
+    </template>
+
+    <script>
+      const participantsInput = document.getElementById("participantsInput");
+      const startBtn = document.getElementById("startBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const resultsSection = document.getElementById("resultsSection");
+      const leaderboardSection = document.getElementById("leaderboardSection");
+      const resultsTable = document.getElementById("resultsTable");
+      const leaderboardBody = document.getElementById("leaderboardBody");
+      const shareLinkInput = document.getElementById("shareLink");
+      const copyLinkBtn = document.getElementById("copyLinkBtn");
+      const roundInfo = document.getElementById("roundInfo");
+      const optionTemplate = document.getElementById("optionTemplate");
+
+      const state = {
+        players: [],
+        results: {}, // key: "i-j" where i < j, value: "1-0"|"0-1"|"0.5-0.5"
+      };
+
+      startBtn.addEventListener("click", () => {
+        const players = extractPlayers();
+        if (players.length < 2) {
+          alert("Добавьте минимум двух участников.");
+          return;
+        }
+        state.players = players;
+        state.results = {};
+        buildResultsTable();
+        updateLeaderboard();
+        updateShareLink();
+        resultsSection.classList.remove("hidden");
+        leaderboardSection.classList.remove("hidden");
+      });
+
+      resetBtn.addEventListener("click", () => {
+        participantsInput.value = "";
+        state.players = [];
+        state.results = {};
+        resultsTable.innerHTML = "";
+        leaderboardBody.innerHTML = "";
+        resultsSection.classList.add("hidden");
+        leaderboardSection.classList.add("hidden");
+        shareLinkInput.value = "";
+        history.replaceState(null, "", window.location.pathname);
+      });
+
+      copyLinkBtn.addEventListener("click", () => {
+        if (!shareLinkInput.value) {
+          alert("Сначала сформируйте ссылку.");
+          return;
+        }
+        navigator.clipboard
+          .writeText(shareLinkInput.value)
+          .then(() => {
+            copyLinkBtn.textContent = "Готово!";
+            setTimeout(() => (copyLinkBtn.textContent = "Скопировать"), 2000);
+          })
+          .catch(() => alert("Не удалось скопировать"));
+      });
+
+      function extractPlayers() {
+        return participantsInput.value
+          .split(/\n|,/)
+          .map((name) => name.trim())
+          .filter((name, idx, arr) => name && arr.indexOf(name) === idx);
+      }
+
+      function buildResultsTable() {
+        resultsTable.innerHTML = "";
+        const players = state.players;
+        roundInfo.textContent = `${players.length} участников • ${players.length - 1} кругов`;
+
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        headerRow.appendChild(document.createElement("th"));
+        players.forEach((player) => {
+          const th = document.createElement("th");
+          th.textContent = player;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        resultsTable.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        players.forEach((player, i) => {
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("th");
+          nameCell.textContent = player;
+          row.appendChild(nameCell);
+
+          players.forEach((opponent, j) => {
+            const cell = document.createElement("td");
+            if (i === j) {
+              cell.textContent = "—";
+            } else if (j > i) {
+              const select = createResultSelect(i, j);
+              cell.appendChild(select);
+            } else {
+              const span = document.createElement("span");
+              span.className = "muted";
+              span.dataset.mirror = `${j}-${i}`;
+              cell.appendChild(span);
+            }
+            row.appendChild(cell);
+          });
+          tbody.appendChild(row);
+        });
+        resultsTable.appendChild(tbody);
+      }
+
+      function createResultSelect(i, j) {
+        const select = document.createElement("select");
+        select.dataset.match = `${i}-${j}`;
+        select.innerHTML = optionTemplate.innerHTML;
+        select.addEventListener("change", (event) => {
+          const value = event.target.value;
+          if (value) {
+            state.results[`${i}-${j}`] = value;
+          } else {
+            delete state.results[`${i}-${j}`];
+          }
+          updateMirrorCells(`${i}-${j}`, value);
+          updateLeaderboard();
+          updateShareLink();
+        });
+        const existing = state.results[`${i}-${j}`];
+        if (existing) {
+          select.value = existing;
+        }
+        return select;
+      }
+
+      function updateMirrorCells(matchKey, value) {
+        const mirrors = resultsTable.querySelectorAll(`[data-mirror="${matchKey}"]`);
+        mirrors.forEach((node) => {
+          node.textContent = formatMirrorText(value);
+        });
+      }
+
+      function formatMirrorText(value) {
+        if (!value) return "";
+        if (value === "1-0") return "0 - 1";
+        if (value === "0-1") return "1 - 0";
+        return "½ - ½";
+      }
+
+      function updateLeaderboard() {
+        const scores = state.players.map((player) => ({ player, points: 0, games: 0 }));
+        Object.entries(state.results).forEach(([key, value]) => {
+          const [i, j] = key.split("-").map(Number);
+          const matchScore = interpretScore(value);
+          scores[i].points += matchScore[0];
+          scores[j].points += matchScore[1];
+          scores[i].games += 1;
+          scores[j].games += 1;
+        });
+        scores.sort((a, b) => b.points - a.points || a.player.localeCompare(b.player));
+        leaderboardBody.innerHTML = scores
+          .map((row, index) => {
+            return `<tr><td>${index + 1}</td><td>${row.player}</td><td>${row.points.toFixed(1)}</td><td>${row.games}</td></tr>`;
+          })
+          .join("");
+      }
+
+      function interpretScore(value) {
+        switch (value) {
+          case "1-0":
+            return [1, 0];
+          case "0-1":
+            return [0, 1];
+          case "0.5-0.5":
+            return [0.5, 0.5];
+          default:
+            return [0, 0];
+        }
+      }
+
+      function updateShareLink() {
+        if (!state.players.length) {
+          shareLinkInput.value = "";
+          return;
+        }
+        const payload = {
+          players: state.players,
+          results: state.results,
+        };
+        const encoded = encodeState(payload);
+        const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+        shareLinkInput.value = url;
+        history.replaceState(null, "", `?data=${encoded}`);
+      }
+
+      function hydrateFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has("data")) return;
+        try {
+          const encoded = params.get("data");
+          const parsed = decodeState(encoded);
+          if (Array.isArray(parsed.players) && parsed.players.length >= 2) {
+            participantsInput.value = parsed.players.join("\n");
+            state.players = parsed.players;
+            state.results = parsed.results || {};
+            buildResultsTable();
+            Object.entries(state.results).forEach(([key, value]) => {
+              const select = resultsTable.querySelector(`[data-match="${key}"]`);
+              if (select) {
+                select.value = value;
+                updateMirrorCells(key, value);
+              }
+            });
+            resultsSection.classList.remove("hidden");
+            leaderboardSection.classList.remove("hidden");
+            updateLeaderboard();
+            updateShareLink();
+          }
+        } catch (error) {
+          console.warn("Не удалось прочитать данные из ссылки", error);
+        }
+      }
+
+      function encodeState(payload) {
+        const json = JSON.stringify(payload);
+        const bytes = new TextEncoder().encode(json);
+        let binary = "";
+        bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary);
+      }
+
+      function decodeState(encoded) {
+        const binary = atob(encoded);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        const json = new TextDecoder().decode(bytes);
+        return JSON.parse(json);
+      }
+
+      hydrateFromURL();
+    </script>
+  </body>
+</html>
