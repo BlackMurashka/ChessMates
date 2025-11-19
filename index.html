@@ -408,9 +408,10 @@ description: "SPA на Jekyll для проведения кругового ш�
           results: state.results,
         };
         const encoded = encodeState(payload);
-        const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
-        shareLinkInput.value = url;
-        history.replaceState(null, "", `?data=${encoded}`);
+        const url = new URL(window.location.href);
+        url.searchParams.set("data", encoded);
+        shareLinkInput.value = url.toString();
+        history.replaceState(null, "", url.toString());
       }
 
       function hydrateFromURL() {
@@ -443,18 +444,29 @@ description: "SPA на Jekyll для проведения кругового ш�
 
       function encodeState(payload) {
         const json = JSON.stringify(payload);
-        const bytes = new TextEncoder().encode(json);
-        let binary = "";
-        bytes.forEach((byte) => {
-          binary += String.fromCharCode(byte);
-        });
-        return btoa(binary);
+        if (window.TextEncoder) {
+          const bytes = new TextEncoder().encode(json);
+          let binary = "";
+          bytes.forEach((byte) => {
+            binary += String.fromCharCode(byte);
+          });
+          return btoa(binary);
+        }
+        // Fallback for older browsers without TextEncoder
+        return btoa(unescape(encodeURIComponent(json)));
       }
 
       function decodeState(encoded) {
-        const binary = atob(encoded);
-        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-        const json = new TextDecoder().decode(bytes);
+        if (!encoded) return {};
+        const normalized = encoded.replace(/ /g, "+");
+        const binary = atob(normalized);
+        if (window.TextDecoder) {
+          const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+          const json = new TextDecoder().decode(bytes);
+          return JSON.parse(json);
+        }
+        // Fallback for older browsers without TextDecoder
+        const json = decodeURIComponent(escape(binary));
         return JSON.parse(json);
       }
 
